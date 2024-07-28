@@ -15,7 +15,7 @@ const studentSchema = new mongoose.Schema({
         required: true,
     },
     phone:{
-        type: Number,
+        type: Number
     },
     rollNo:{
         type: String,
