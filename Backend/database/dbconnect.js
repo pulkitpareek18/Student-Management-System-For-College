@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
-export const connectDB = () => mongoose.connect("mongodb://127.0.0.1:27017/",{
-    dbName: "CMS"
+export const connectDB = () => mongoose.connect("mongodb+srv://pulkit:pulkit@cluster0.uiolkef.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",{
+    dbName: "sms"
 })
 .then((c)=>console.log(`Database connected with ${c.connection.host}`))
 .catch((e)=>console.log(e))

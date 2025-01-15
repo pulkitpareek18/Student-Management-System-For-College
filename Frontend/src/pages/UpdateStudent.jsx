@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const AddStudent = () => {
+const UpdateStudent = () => {
+
+    const email = useParams().email;
+
   // Generate the past 4 years and the next 4 years
   const currentYear = new Date().getFullYear();
   const years = [];
@@ -73,14 +77,36 @@ const AddStudent = () => {
         return updatedData; // Return the updated state
     });
 };
+
+
+useEffect(() => {
+    const fetchStudent = async () => {
+        try {
+            const response = await fetch('http://localhost:3000/api/v1/students/profile?email=' + email);
+            if (!response.ok) {
+                throw new Error('Failed to fetch student information');
+            }
+            const data = await response.json();
+            data.dob = new Date(data.dob).toISOString().split('T')[0];
+            setFormData(data);
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to fetch student information');
+        }
+    };
+    fetchStudent();
+}, [email]);
+
+
+    
   
 
 
 const handleSubmit = async (e) => {
   e.preventDefault();
   try {
-    const response = await fetch('http://localhost:3000/api/v1/students', {
-      method: 'PUT',
+    const response = await fetch('http://localhost:3000/api/v1/students?email='+email, {
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
       },
@@ -90,7 +116,7 @@ const handleSubmit = async (e) => {
     if (!response.ok) {
       // Try to get the error message from the response
       const errorData = await response.json();
-      const errorMessage = errorData.error ? errorData.error : 'Failed to add student';
+      const errorMessage = errorData.error ? errorData.error : 'Failed to update student';
 
       // If there's a messages array, join them for a better display
       if (errorData.messages && Array.isArray(errorData.messages)) {
@@ -101,76 +127,13 @@ const handleSubmit = async (e) => {
     }
 
     const data = await response.json();
-    console.log('Student added successfully:', data);
-    toast.success('Student added successfully!'); // Show success toast
+    console.log('Student updated successfully:', data);
+    toast.success('Student updated successfully!'); // Show success toast
   } catch (error) {
     console.error('Error:', error);
-    toast.error('Error adding student: ' + error.message); // Show error toast
+    toast.error('Error updating student: ' + error.message); // Show error toast
   }
   console.log(formData);
-};
-
-
- // State to store selected files
- const [selectedFiles, setSelectedFiles] = useState([]);
-
- // Handle file selection
- const handleFileChange = (e) => {
-   // Update state with selected files
-   setSelectedFiles(e.target.files);
- };
-
- const handleUpload = async (e) => {
-  e.preventDefault();
-
-  const fileInput = document.getElementById('dropzone-file');
-  const files = fileInput.files;
-
-  // Ensure at least one file is selected
-  if (files.length === 0) {
-    alert('Please select at least one file.');
-    return;
-  }
-
-  // Get the student's email (you might get this from a form or state)
-  const email = formData.email; // Assuming there's an input with id 'student-email'
-
-  if (!email) {
-    alert('Please provide the student\'s email.');
-    return;
-  }
-
-  // Prepare the FormData object
-  const formdata = new FormData();
-  
-  // Append each file to the formData
-  for (let i = 0; i < files.length; i++) {
-    formdata.append('files', files[i]);
-  }
-
-  // Append the email to the FormData
-  formdata.append('email', email);
-
-  try {
-    // Send the files and email in a POST request to the backend
-    const response = await fetch('http://localhost:3000/api/v1/upload/upload-multiple', {
-      method: 'POST',
-      body: formdata,
-    });
-
-    if (response.ok) {
-      const result = await response.json(); // Parse the response as JSON
-      alert(`${result.message}\nFilenames: ${result.filenames.join(', ')}`);
-      document.getElementById('dropzone-file').value = ''; // Clear the file input
-      setSelectedFiles(0); // Clear the selected files state (if any)
-    } else {
-      const error = await response.text(); // In case of error, get the plain text error message
-      alert(`Error: ${error}`);
-    }
-  } catch (error) {
-    console.error('Upload failed:', error);
-    alert('An error occurred while uploading files.');
-  }
 };
 
 
@@ -362,45 +325,6 @@ const handleSubmit = async (e) => {
                     <textarea id="remarks" name="remarks" rows={4} value={formData.remarks} onChange={handleChange} className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Write any missing information here..." />
                   </div>
 
-                  <div className="flex items-center justify-center w-full">
-                  {/* Label for file input (hidden) */}
-                  <input
-                    id="dropzone-file"
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={handleFileChange} // Handle file selection
-                  />
-
-                  {/* Display selected files */}
-                  {selectedFiles.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="text-sm text-gray-700">Selected Files:</h4>
-                      <ul className="list-disc pl-5 text-sm text-gray-600">
-                        {Array.from(selectedFiles).map((file, index) => (
-                          <li key={index}>{file.name}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Button to trigger file input */}
-                  <button
-                    onClick={() => document.getElementById('dropzone-file').click()}
-                    className="m-2 inline-flex px-5 py-2.5 mt-4 sm:mt-6 text-sm font-medium text-center text-white bg-blue-700 rounded-lg focus:ring-4 focus:ring-primary-200 dark:focus:ring-primary-900 hover:bg-primary-800"
-                  >
-                    Select Files
-                  </button>
-
-                  {/* Upload Button */}
-                  <button
-                    onClick={handleUpload}
-                    className="m-2 inline-flex px-5 py-2.5 mt-4 sm:mt-6 text-sm font-medium text-center text-white bg-green-700 rounded-lg focus:ring-4 focus:ring-primary-200 dark:focus:ring-primary-900 hover:bg-primary-800"
-                  >
-                    Upload Documents
-                  </button>
-                </div>
-
                 </div>
 
               </div>
@@ -408,7 +332,7 @@ const handleSubmit = async (e) => {
               {/* Submit Button */}
               <div className="flex justify-center mb-11">
                 <button type="submit" className="inline-flex px-5 py-2.5 mt-4 sm:mt-6 text-sm font-medium text-center text-white bg-blue-700 rounded-lg focus:ring-4 focus:ring-primary-200 dark:focus:ring-primary-900 hover:bg-primary-800">
-                  Add Student
+                  Update Student
                 </button>
               </div>
 
@@ -422,4 +346,4 @@ const handleSubmit = async (e) => {
   )
 }
 
-export default AddStudent
+export default UpdateStudent
